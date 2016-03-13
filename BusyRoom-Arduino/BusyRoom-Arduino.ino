@@ -23,27 +23,7 @@ void setup() {
     Serial.begin(57600);
     Serial.println("\n[webClient]");
 
-    if (ether.begin(sizeof Ethernet::buffer, mymac) == 0)
-        Serial.println("Failed to access Ethernet controller");
-    if (!ether.dhcpSetup())
-        Serial.println("DHCP failed");
-
-    ether.printIp("IP:  ", ether.myip);
-    ether.printIp("GW:  ", ether.gwip);
-    ether.printIp("DNS: ", ether.dnsip);
-
-    ether.hisip[0] = 192;
-    ether.hisip[1] = 168;
-    ether.hisip[2] = 0;
-    ether.hisip[3] = 14;
-
-    ether.hisport = 8765;
-
-    //if (!ether.dnsLookup("google.com"))
-    // Serial.println("DNS failed");
-
-    ether.printIp("SRV: ", ether.hisip);
-    //  Serial.println("hisport: %D", ether.hisport);
+    initialize_ethernet();
 
     pinMode(pirPin, INPUT);
 }
@@ -87,4 +67,27 @@ void loop() {
         Serial.println(reply);
         Serial.println("");
     }
+}
+
+void initialize_ethernet()
+{
+    if (ether.begin(sizeof Ethernet::buffer, mymac) == 0)
+        Serial.println("Failed to access Ethernet controller");
+    if (!ether.dhcpSetup())
+        Serial.println("DHCP failed");
+
+    ether.printIp("IP:  ", ether.myip);
+    ether.printIp("GW:  ", ether.gwip);
+    ether.printIp("DNS: ", ether.dnsip);
+
+    ether.hisip[0] = 192;
+    ether.hisip[1] = 168;
+    ether.hisip[2] = 0;
+    ether.hisip[3] = 14;
+
+    ether.hisport = 8765;
+
+    ether.printIp("Target IP: ", ether.hisip);
+    Serial.print("Target port: ");
+    Serial.println(ether.hisport);
 }
