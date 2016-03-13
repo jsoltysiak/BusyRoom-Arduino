@@ -16,12 +16,15 @@ byte Ethernet::buffer[700];
 uint32_t timer;
 Stash stash;
 
-void setup () {
+byte session;
+
+
+void setup() {
   Serial.begin(57600);
   Serial.println("\n[webClient]");
 
   if (ether.begin(sizeof Ethernet::buffer, mymac) == 0)
-    Serial.println( "Failed to access Ethernet controller");
+    Serial.println("Failed to access Ethernet controller");
   if (!ether.dhcpSetup())
     Serial.println("DHCP failed");
 
@@ -45,7 +48,7 @@ void setup () {
   pinMode(pirPin, INPUT);
 }
 
-void loop () {
+void loop() {
   ether.packetLoop(ether.packetReceive());
 
   if (millis() > timer) {
@@ -61,18 +64,27 @@ void loop () {
 
     // generate the header with payload - note that the stash size is used,
     // and that a "stash descriptor" is passed in as argument using "$H"
-    Stash::prepare(PSTR("POST http://192.168.0.14:8765$F HTTP/1.1" "\r\n"
-                        "Host: $F" "\r\n"
-                        "Content-Length: $D" "\r\n"
-                        "Content-Type: application/json" "\r\n"
-                        "\r\n"
-                        "$H"),
-                   PSTR(PATH), website, stash.size(), sd);
+    Stash::prepare(
+      PSTR(
+        "POST http://192.168.0.14:8765$F HTTP/1.1" "\r\n"
+        "Host: $F" "\r\n"
+        "Content-Length: $D" "\r\n"
+        "Content-Type: application/json" "\r\n"
+        "\r\n"
+        "$H"),
+      PSTR(PATH), website, stash.size(), sd);
 
-    Serial.println("Package ready!");
-    Serial.println(sd);
     // send the packet - this also releases all stash buffers once done
-    ether.tcpSend();
+    session = ether.tcpSend();
     Serial.println("Sent the package!");
+  }
+
+  const char* reply = ether.tcpReply(session);
+
+  if (reply != 0) {
+    Serial.println("");
+    Serial.println("Reply from the server:");
+    Serial.println(reply);
+    Serial.println("");
   }
 }
