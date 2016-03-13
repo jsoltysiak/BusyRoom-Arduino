@@ -1,29 +1,27 @@
 #include <EtherCard.h>
 
-// your variable
 
-#define PATH    "/api/rooms/Arduino/states"
-
-const int pirPin = 7;
+#define PATH "api/rooms/Arduino/states"
 
 // ethernet interface mac address, must be unique on the LAN
 byte mymac[] = { 0x74, 0x69, 0x69, 0x2D, 0x38, 0x31 };
 
-const char website[] PROGMEM = "http://192.168.0.14:8765";
+const char website[] PROGMEM = "192.168.0.14:8765";
 
-bool isOccupied = false;
 byte Ethernet::buffer[700];
 uint32_t timer;
 Stash stash;
-
 byte session;
+
+const int pirPin = 7;
+bool pirSensorState = false;
 
 
 void setup() {
     Serial.begin(57600);
-    Serial.println("\n[webClient]");
+    Serial.println("\n[BusyRoom-Arduino]");
 
-    initialize_ethernet();
+    initializeEthernet();
 
     pinMode(pirPin, INPUT);
 }
@@ -34,42 +32,15 @@ void loop() {
     if (millis() > timer) {
         timer = millis() + 10000;
 
-        isOccupied = digitalRead(pirPin);
+        pirSensorState = digitalRead(pirPin);
 
-        byte sd = stash.create();
-        stash.print("{\"isOccupied\":\"");
-        stash.print(isOccupied ? "true" : "false");
-        stash.print("\"}");
-        stash.save();
-
-        // generate the header with payload - note that the stash size is used,
-        // and that a "stash descriptor" is passed in as argument using "$H"
-        Stash::prepare(
-            PSTR(
-                "POST http://192.168.0.14:8765$F HTTP/1.1" "\r\n"
-                "Host: $F" "\r\n"
-                "Content-Length: $D" "\r\n"
-                "Content-Type: application/json" "\r\n"
-                "\r\n"
-                "$H"),
-            PSTR(PATH), website, stash.size(), sd);
-
-        // send the packet - this also releases all stash buffers once done
-        session = ether.tcpSend();
-        Serial.println("Sent the package!");
+        sendSensorReadings(pirSensorState);
     }
 
-    const char* reply = ether.tcpReply(session);
-
-    if (reply != 0) {
-        Serial.println("");
-        Serial.println("Reply from the server:");
-        Serial.println(reply);
-        Serial.println("");
-    }
+    getAndPrintReply();
 }
 
-void initialize_ethernet()
+void initializeEthernet()
 {
     if (ether.begin(sizeof Ethernet::buffer, mymac) == 0)
         Serial.println("Failed to access Ethernet controller");
@@ -90,4 +61,41 @@ void initialize_ethernet()
     ether.printIp("Target IP: ", ether.hisip);
     Serial.print("Target port: ");
     Serial.println(ether.hisport);
+}
+
+void sendSensorReadings(bool isOccupied)
+{
+    byte sd = stash.create();
+    stash.print("{\"isOccupied\":\"");
+    stash.print(isOccupied ? "true" : "false");
+    stash.print("\"}");
+    stash.save();
+
+    // generate the header with payload - note that the stash size is used,
+    // and that a "stash descriptor" is passed in as argument using "$H"
+    Stash::prepare(
+        PSTR(
+            "POST http://$F/$F HTTP/1.1" "\r\n"
+            "Host: $F" "\r\n"
+            "Content-Length: $D" "\r\n"
+            "Content-Type: application/json" "\r\n"
+            "\r\n"
+            "$H"),
+        website, PSTR(PATH), website, stash.size(), sd);
+
+    // send the packet - this also releases all stash buffers once done
+    session = ether.tcpSend();
+    Serial.println("Sent the package!");
+}
+
+void getAndPrintReply()
+{
+    const char* reply = ether.tcpReply(session);
+
+    if (reply != 0) {
+        Serial.println("");
+        Serial.println("Reply from the server:");
+        Serial.println(reply);
+        Serial.println("");
+    }
 }
