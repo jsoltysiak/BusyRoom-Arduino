@@ -1,19 +1,20 @@
 #include <EtherCard.h>
 
-
-#define PATH "api/rooms/Arduino/states"
+const int PIN_PIR = 7;
 
 // ethernet interface mac address, must be unique on the LAN
-byte mymac[] = { 0x74, 0x69, 0x69, 0x2D, 0x38, 0x31 };
+const byte mymac[] = { 0x74, 0x69, 0x69, 0x2D, 0x38, 0x31 };
 
-const char website[] PROGMEM = "192.168.0.14:8765";
+const uint8_t IP[] = {192,168,0,14};
+const uint16_t PORT = 3333;
+const char ADDRESS[] PROGMEM = "192.168.0.14:3333";
+const char PATH[] PROGMEM = "api/rooms/Arduino/states";
 
 byte Ethernet::buffer[700];
 uint32_t timer;
 Stash stash;
 byte session;
 
-const int pirPin = 7;
 bool pirSensorState = false;
 
 
@@ -23,7 +24,9 @@ void setup() {
 
     initializeEthernet();
 
-    pinMode(pirPin, INPUT);
+    pinMode(PIN_PIR, INPUT);
+
+    timer = millis() + 3000;
 }
 
 void loop() {
@@ -32,8 +35,7 @@ void loop() {
     if (millis() > timer) {
         timer = millis() + 10000;
 
-        pirSensorState = digitalRead(pirPin);
-
+        pirSensorState = digitalRead(PIN_PIR);
         sendSensorReadings(pirSensorState);
     }
 
@@ -51,12 +53,12 @@ void initializeEthernet()
     ether.printIp("GW:  ", ether.gwip);
     ether.printIp("DNS: ", ether.dnsip);
 
-    ether.hisip[0] = 192;
-    ether.hisip[1] = 168;
-    ether.hisip[2] = 0;
-    ether.hisip[3] = 14;
+    ether.hisip[0] = IP[0];
+    ether.hisip[1] = IP[1];
+    ether.hisip[2] = IP[2];
+    ether.hisip[3] = IP[3];
 
-    ether.hisport = 8765;
+    ether.hisport = PORT;
 
     ether.printIp("Target IP: ", ether.hisip);
     Serial.print("Target port: ");
@@ -81,7 +83,7 @@ void sendSensorReadings(bool isOccupied)
             "Content-Type: application/json" "\r\n"
             "\r\n"
             "$H"),
-        website, PSTR(PATH), website, stash.size(), sd);
+        ADDRESS, PATH, ADDRESS, stash.size(), sd);
 
     // send the packet - this also releases all stash buffers once done
     session = ether.tcpSend();
