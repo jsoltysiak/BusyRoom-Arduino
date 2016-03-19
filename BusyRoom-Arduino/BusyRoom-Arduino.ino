@@ -51,6 +51,7 @@ void loop() {
 
         ldrReading = analogRead(PIN_LDR);
         brightness = map(ldrReading, 0, 900, 0, 9);
+        brightness = brightness > 9 ? 9 : brightness;
 
         Serial.print("pirSensorState: ");
         Serial.println(pirSensorState);
