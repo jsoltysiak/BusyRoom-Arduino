@@ -1,8 +1,9 @@
 #include <DHT.h>
 #include <EtherCard.h>
 
-const int PIN_PIR = 7;
 const int PIN_DHT = 2;
+const int PIN_LDR = 0;
+const int PIN_PIR = 7;
 
 // ethernet interface mac address, must be unique on the LAN
 const byte mymac[] = { 0x74, 0x69, 0x69, 0x2D, 0x38, 0x31 };
@@ -21,6 +22,7 @@ DHT dht;
 float temperature;
 float humidity;
 bool pirSensorState = false;
+int ldrReading;
 
 
 void setup() {
@@ -46,12 +48,16 @@ void loop() {
         temperature = dht.getTemperature();
         humidity = dht.getHumidity();
 
+        ldrReading = analogRead(PIN_LDR);
+
         Serial.print("pirSensorState: ");
         Serial.println(pirSensorState);
         Serial.print("temperature: ");
         Serial.println(temperature);
         Serial.print("humidity: ");
         Serial.println(humidity);
+        Serial.print("LDR: ");
+        Serial.println(ldrReading);
 
         sendSensorReadings(pirSensorState, temperature, humidity);
     }
