@@ -23,6 +23,7 @@ float temperature;
 float humidity;
 bool pirSensorState = false;
 int ldrReading;
+int brightness;
 
 
 void setup() {
@@ -49,6 +50,7 @@ void loop() {
         humidity = dht.getHumidity();
 
         ldrReading = analogRead(PIN_LDR);
+        brightness = map(ldrReading, 0, 900, 0, 9);
 
         Serial.print("pirSensorState: ");
         Serial.println(pirSensorState);
@@ -58,8 +60,10 @@ void loop() {
         Serial.println(humidity);
         Serial.print("LDR: ");
         Serial.println(ldrReading);
+        Serial.print("Brightness: ");
+        Serial.println(brightness);
 
-        sendSensorReadings(pirSensorState, temperature, humidity);
+        sendSensorReadings(pirSensorState, temperature, humidity, brightness);
     }
 
     getAndPrintReply();
@@ -88,7 +92,7 @@ void initializeEthernet()
     Serial.println(ether.hisport);
 }
 
-void sendSensorReadings(bool isOccupied, float temperature, float humidity)
+void sendSensorReadings(bool isOccupied, float temperature, float humidity, int brightness)
 {
     byte sd = stash.create();
     stash.print("{");
@@ -100,6 +104,9 @@ void sendSensorReadings(bool isOccupied, float temperature, float humidity)
     stash.print("\",");
     stash.print("\"humidity\":\"");
     stash.print(humidity);
+    stash.print("\",");
+    stash.print("\"brightness\":\"");
+    stash.print(brightness);
     stash.print("\"");
     stash.print("}");
     stash.save();
