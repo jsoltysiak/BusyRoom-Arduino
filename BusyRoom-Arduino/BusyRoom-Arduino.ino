@@ -97,18 +97,17 @@ void sendSensorReadings(bool isOccupied, float temperature, float humidity, int 
 {
     byte sd = stash.create();
     stash.print("{");
-    stash.print("\"isOccupied\":\"");
-    stash.print(isOccupied ? "true" : "false");
+    stash.print("\"isOccupied\":");
+    stash.print(isOccupied ? "\"true\"" : "\"false\"");
     stash.print(",");
-    stash.print("\"temperature\":\"");
+    stash.print("\"temperature\":");
     stash.print(temperature);
-    stash.print("\",");
-    stash.print("\"humidity\":\"");
+    stash.print(",");
+    stash.print("\"humidity\":");
     stash.print(humidity);
-    stash.print("\",");
-    stash.print("\"brightness\":\"");
+    stash.print(",");
+    stash.print("\"brightness\":");
     stash.print(brightness);
-    stash.print("\"");
     stash.print("}");
     stash.save();
 
